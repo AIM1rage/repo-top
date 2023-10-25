@@ -13,7 +13,7 @@ class RateLimitError(Exception):
 class AsyncGithubApiClient:
     rate_limit_url = 'https://api.github.com/rate_limit'
 
-    def __init__(self, token, timeout=20):
+    def __init__(self, token, timeout=15):
         self.client = httpx.AsyncClient(timeout=timeout)
         self.headers = {"Accept": "application/vnd.github.v3+json",
                         "Authorization": f'Bearer {token}',
@@ -43,7 +43,7 @@ class AsyncGithubApiClient:
         self.remaining = int(response.headers['X-RateLimit-Remaining'])
         self.used = int(response.headers['X-RateLimit-Used'])
 
-    async def fetch_top_committers(self, organization, top_count):
+    async def fetch_top_committers(self, organization, top_count=100):
         repos = await self._fetch_repos_(organization)
 
         repos_commits = await self._fetch_repos_commits(repos)
@@ -86,13 +86,15 @@ async def main(args):
     token = args.token
     organization = args.organization
     try:
-        client = AsyncGithubApiClient(token)
+        client = AsyncGithubApiClient(token, args.t)
 
         task = asyncio.create_task(
-            client.fetch_top_committers(organization, 100))
+            client.fetch_top_committers(organization, args.c))
 
         data = await task
-        print(client.used)
+        print(
+            f'You have been used {client.used} queries of {client.limit}. Remaining: {client.remaining}')
+        print()
         for author, contributions in data:
             print(f'{author}: {contributions} commits count')
 
@@ -107,7 +109,9 @@ if __name__ == "__main__":
                         help='Github access token')
     parser.add_argument('organization', type=str,
                         help='Github organization. Please specify the name of the organization on the Github website.')
-    parser.add_argument('-t', default=10, type=float,
-                        help='The timeout for a single request')
+    parser.add_argument('-c', default=100, type=int,
+                        help='The number of top contributors in the organization. If it is specified to be greater than the number of actual contributors, it will print exactly the number of contributors available in the organization.')
+    parser.add_argument('-t', default=15, type=float,
+                        help='The timeout for a single request in seconds')
     args = parser.parse_args()
     asyncio.run(main(args))
