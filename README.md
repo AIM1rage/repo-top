@@ -1,6 +1,6 @@
 # Repo-Top
 
-This program is designed to retrieve a list of top contributors from a specific organization using the GitHub API.
+This program is designed to retrieve a list of top contributors from a specific organization using the GitHub API. The code works for Twitter and SKB Kontur organizations.  
 
 ## Requirements
 
@@ -35,5 +35,5 @@ python repo-top.py <token> <organization> [-c <count>] [-t <timeout>]
 Example usage:
 
 ```
-python repo-top.py your_token your_organization -c 10 -t 30
+python repo-top.py your_token twitter -c 10 -t 30
 ```
